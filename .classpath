@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+    <!-- Source folder -->
+    <classpathentry kind="src" path="src"/>
+
+    <!-- Output (compiled .class) folder -->
+    <classpathentry kind="output" path="target"/>
+
+    <!-- External JAR dependencies -->
+    <classpathentry kind="lib" path="lib/gson-2.13.2.jar"/>
+    <classpathentry kind="lib" path="lib/postgresql-42.7.7.jar"/>
+
+    <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+</classpath>
