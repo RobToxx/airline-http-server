@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import auth.PasswordHasher;
-import auth.RegisterResult;
+import auth.RegisterStatus;
 import auth.Session;
 import auth.User;
 import repository.SessionRepository;
@@ -78,21 +78,21 @@ public class AuthService {
 		});
 	}
 
-	public Result<RegisterResult> register(String name, String email, String password) {
+	public Result<RegisterStatus> register(String name, String email, String password) {
 
 		return Result.of(() -> {
 
 			if (name == null || name.isBlank()) {
 				
-				return RegisterResult.INVALID_NAME;
+				return RegisterStatus.INVALID_NAME;
 			}
 
 			if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
-				return RegisterResult.INVALID_EMAIL;
+				return RegisterStatus.INVALID_EMAIL;
 			}
 
 			if (password == null || !password.matches("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d).{8,}$")) {
-				return RegisterResult.INVALID_PASSWORD;
+				return RegisterStatus.INVALID_PASSWORD;
 			}
 
 			String salt = PasswordHasher.generateSalt();
@@ -107,10 +107,10 @@ public class AuthService {
 
 			if (userDAO.create(user) instanceof Result.Failure) {
 
-				return RegisterResult.EMAIL_EXISTS;
+				return RegisterStatus.EMAIL_EXISTS;
 			}
 
-			return RegisterResult.SUCCESS;
+			return RegisterStatus.SUCCESS;
 		});
 	}
 }

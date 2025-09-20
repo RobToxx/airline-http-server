@@ -12,7 +12,7 @@ import com.google.gson.reflect.TypeToken;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
-import auth.RegisterResult;
+import auth.RegisterStatus;
 import auth.Session;
 import service.AuthService;
 import util.LocalDateTimeAdapter;
@@ -230,7 +230,7 @@ public class AuthController {
 
         System.out.println(1);
 
-        Result<RegisterResult> result = this.authService.register(
+        Result<RegisterStatus> result = this.authService.register(
             registerRequest.get("name"), 
             registerRequest.get("email"), 
             registerRequest.get("password")
@@ -243,9 +243,9 @@ public class AuthController {
             return sendInternalServerError(exchange, f.exception());
         }
 
-        RegisterResult registerResult = result.expect();
+        RegisterStatus registerResult = result.expect();
 
-        if (!registerResult.equals(RegisterResult.SUCCESS)) {
+        if (!registerResult.equals(RegisterStatus.SUCCESS)) {
 
              return sendResponse(
                 exchange, 
@@ -254,12 +254,10 @@ public class AuthController {
             );
         }
 
-        System.out.println(1);
-
         return sendResponse(
             exchange, 
             200, 
-            "{}"
+            gson.toJson(registerResult)
         );
     }
 

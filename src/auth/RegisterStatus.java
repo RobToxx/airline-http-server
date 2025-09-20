@@ -1,6 +1,6 @@
 package auth;
 
-public enum RegisterResult {
+public enum RegisterStatus {
     SUCCESS,
     INVALID_NAME,
     INVALID_EMAIL,
