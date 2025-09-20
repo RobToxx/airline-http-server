@@ -14,13 +14,13 @@ public class LocalDateTimeAdapter implements JsonSerializer<LocalDateTime>, Json
                                  Type type,
                                  JsonSerializationContext jsonSerializationContext) {
 
-        return new JsonPrimitive(localDateTime.format(formatter)); // "yyyy-MM-dd"
+        return new JsonPrimitive(localDateTime.format(formatter));
 
     }
 
     public LocalDateTime deserialize(JsonElement jsonElement,
-                                 Type type,
-                                 JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+                                     Type type,
+                                     JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
 
         return LocalDateTime.parse(jsonElement.getAsJsonPrimitive().getAsString(), formatter);
     }
