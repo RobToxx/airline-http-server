@@ -8,11 +8,14 @@ import data.PostgreSQLConnection;
 import model.Flight;
 import model.Seat;
 import repository.FlightRepository;
+import repository.SeatRepository;
 import repository.SessionRepository;
 import repository.UserDAO;
 import service.AuthService;
+import service.BookingService;
 import service.FlightService;
 import controller.AuthController;
+import controller.BookingController;
 import controller.FlightController;
 
 import generators.*;
@@ -23,8 +26,8 @@ public class Main {
     
     public static void main(String[] args) {
 
-        DatabaseConnection connection = PostgreSQLConnection.create(
-            "jdbc:postgresql://192.168.56.101:5432/", 
+        DatabaseConnection database = PostgreSQLConnection.create(
+            "jdbc:postgresql://192.168.1.170:5432/", 
             "postgres", 
             "Admin1234$"
         ).expect("Unable to connect to the database.");
@@ -43,15 +46,18 @@ public class Main {
         for (Airplane airplane : airplanes) genRepo.addSeats(airplane.id(), seats);
         */
 
-        FlightRepository flightRepository = new FlightRepository(connection);
-        SessionRepository sessionRepository = new SessionRepository(connection);
+        FlightRepository flightRepository = new FlightRepository(database);
+        SessionRepository sessionRepository = new SessionRepository(database);
+        SeatRepository seatRepository = new SeatRepository(database);
 
 
-        FlightService flightService = new FlightService(flightRepository);
-        AuthService authService = new AuthService(new UserDAO(connection), sessionRepository);
+        FlightService flightService = new FlightService(flightRepository, seatRepository);
+        AuthService authService = new AuthService(new UserDAO(database), sessionRepository);
+        BookingService bookingService = new BookingService(seatRepository, authService, flightService);
 
         FlightController flightController = new FlightController(flightService);
         AuthController authController = new AuthController(authService);
+        BookingController bookingController = new BookingController(bookingService);
 
         HttpServer server = Result.of(()->{
             return HttpServer.create(new InetSocketAddress(8000), 0);
@@ -60,6 +66,7 @@ public class Main {
         // Rutas
         authController.registerRoutes(server);
         flightController.registerRoutes(server);
+        bookingController.registerRoutes(server);
 
         server.setExecutor(null);
         server.start();

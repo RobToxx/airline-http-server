@@ -12,20 +12,20 @@ import com.google.gson.reflect.TypeToken;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
-import auth.RegisterStatus;
-import auth.Session;
-import service.AuthService;
+import model.Booking;
+import model.Reservation;
+import service.BookingService;
 import util.LocalDateTimeAdapter;
 import util.Result;
 
-public class AuthController {
+public class BookingController {
 
-	private AuthService authService;
+	private BookingService bookingService;
     private Gson gson;
 
-	public AuthController(AuthService authService) {
+	public BookingController(BookingService bookingService) {
 
-		this.authService = authService;
+		this.bookingService = bookingService;
         this.gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .setPrettyPrinting()
@@ -34,28 +34,28 @@ public class AuthController {
 
 	public void registerRoutes(HttpServer server) {
 
-        server.createContext("/user/login", this::handleLogin);
-        server.createContext("/user/logout", this::handleLogout);
-        server.createContext("/user/register", this::handleRegister);
+        server.createContext("/seat/book", this::handleBook);
+        server.createContext("/seat/reserve", this::handleReserve);
+        server.createContext("/seat/unreserve", this::handleUnreserve);
     }
 
-    private void handleLogin(HttpExchange exchange) {
+    private void handleBook(HttpExchange exchange) {
 
         addCorsHeaders(exchange);
 
-        Result<Void> result = processLogin(exchange);
+        Result<Void> result = processBook(exchange);
         
         if (result instanceof Result.Failure failure) {
 
-            System.err.println("Error handling request /user/login: " + failure.exception().getMessage());
+            System.err.println("Error handling request /seat/book: " + failure.exception().getMessage());
 
         } else {
 
-        	System.out.println("Request /user/login: "+exchange.getRemoteAddress()+": ");
+        	System.out.println("Request /seat/book: "+exchange.getRemoteAddress()+": ");
         }
     }
 
-    private Result<Void> processLogin(HttpExchange exchange) {
+    private Result<Void> processBook(HttpExchange exchange) {
 
         if (!"POST".equals(exchange.getRequestMethod())) {
 
@@ -72,67 +72,124 @@ public class AuthController {
 
         sc.close();
         
-        Map<String, String> loginRequest = this.gson.fromJson(
+        Map<String, String> bookRequest = this.gson.fromJson(
             requestBody, 
             new TypeToken<Map<String, String>> () {}.getType()
         );
 
-        Result<Optional<Session>> loginResult = this.authService.login(
-            loginRequest.get("email"), 
-            loginRequest.get("password")
+        Result<Optional<Booking>> result = bookingService.bookSeat(
+            Integer.parseInt(bookRequest.get("flightId")), 
+            bookRequest.get("seatId"), 
+            bookRequest.get("sessionId")
         );
 
-        if (loginResult instanceof Result.Failure f) {
+        if (result instanceof Result.Failure f) {
 
             return sendInternalServerError(exchange, f.exception());
         }
 
-        Optional<Session> sessionOpt = loginResult.expect();
+        Optional<Booking> bookingOpt = result.expect();
 
-        if (sessionOpt.isEmpty()) {
+        if (bookingOpt.isEmpty()) {
 
-             return sendResponse(
+            return sendResponse(
                 exchange, 
-                401, 
-                "Invalid email or password"
+                409, 
+                "Unabe to complete booking"
             );
         }
-
-        Session session = sessionOpt.get();
-
-        exchange.getResponseHeaders().add(
-            "Set-Cookie", 
-            String.format(
-                "SESSION_ID=%s; HttpOnly; Path=/; Max-Age=%d",
-                session.id(),
-                2
-            )
-        );
 
         return sendResponse(
             exchange, 
             200, 
-            this.gson.toJson(session)
+            this.gson.toJson(bookingOpt.get())
         );
     }
 
-    private void handleLogout(HttpExchange exchange) {
+    private void handleReserve(HttpExchange exchange) {
 
         addCorsHeaders(exchange);
 
-        Result<Void> result = processLogout(exchange);
+        Result<Void> result = processReserve(exchange);
         
         if (result instanceof Result.Failure failure) {
 
-            System.err.println("Error handling request /user/logout: " + failure.exception().getMessage());
+            System.err.println("Error handling request /seat/reserve: " + failure.exception().getMessage());
 
         } else {
 
-            System.out.println("Request /user/logout: "+exchange.getRemoteAddress()+": ");
+            System.out.println("Request /seat/reserve: "+exchange.getRemoteAddress()+": ");
         }
     }
 
-    private Result<Void> processLogout(HttpExchange exchange) {
+    private Result<Void> processReserve(HttpExchange exchange) {
+
+        if (!"POST".equals(exchange.getRequestMethod())) {
+
+            return sendResponse(
+                exchange,
+                405, 
+                "Method Not Allowed"
+            );
+        }
+
+        Scanner sc = new Scanner(exchange.getRequestBody()).useDelimiter("\\A");
+        
+        String requestBody = sc.hasNext() ? sc.next() : "";
+
+        sc.close();
+        
+        Map<String, String> reserveRequest = this.gson.fromJson(
+            requestBody, 
+            new TypeToken<Map<String, String>> () {}.getType()
+        );
+
+        Result<Optional<Reservation>> result = bookingService.reserveSeat(
+            Integer.parseInt(reserveRequest.get("flightId")), 
+            reserveRequest.get("seatId"), 
+            reserveRequest.get("sessionId")
+        );
+
+        if (result instanceof Result.Failure f) {
+
+            return sendInternalServerError(exchange, f.exception());
+        }
+
+        Optional<Reservation> reserveOpt = result.expect();
+
+        if (reserveOpt.isEmpty()) {
+
+            return sendResponse(
+                exchange, 
+                409, 
+                "Unabe to complete reservation"
+            );
+        }
+
+        return sendResponse(
+            exchange, 
+            200, 
+            this.gson.toJson(reserveOpt.get())
+        );
+    }
+
+    private void handleUnreserve(HttpExchange exchange) {
+
+        addCorsHeaders(exchange);
+
+        Result<Void> result = processUnreserve(exchange);
+        
+        if (result instanceof Result.Failure failure) {
+
+            System.err.println("Error handling request /seat/unreserve: " + failure.exception().getMessage());
+
+        } else {
+
+            System.out.println("Request /seat/unreserve: "+exchange.getRemoteAddress()+": ");
+        }
+    }
+
+    private Result<Void> processUnreserve(HttpExchange exchange) {
 
         if (!"DELETE".equals(exchange.getRequestMethod())) {
 
@@ -149,115 +206,33 @@ public class AuthController {
 
         sc.close();
         
-        Map<String, String> logoutRequest = this.gson.fromJson(
+        Map<String, String> unreserveRequest = this.gson.fromJson(
             requestBody, 
             new TypeToken<Map<String, String>> () {}.getType()
         );
 
-        Result<Boolean> logoutResult = this.authService.logout(
-            logoutRequest.get("sessionId")
+        Result<Boolean> result = bookingService.unreserveSeat(
+            unreserveRequest.get("reservationId")
         );
-
-        if (logoutResult instanceof Result.Failure f) {
-
-            return sendInternalServerError(exchange, f.exception());
-        }
-
-        if (!logoutResult.expect()) {
-
-             return sendResponse(
-                exchange, 
-                404, 
-                "Session not found"
-            );
-        }
-
-        exchange.getResponseHeaders().add(
-            "Set-Cookie", 
-            String.format(
-                "SESSION_ID=%s; HttpOnly; Path=/; Max-Age=%d",
-                logoutRequest.get("sessionId"),
-                0
-            )
-        );
-
-        return sendResponse(
-            exchange, 
-            200, 
-            "{}"
-        );
-    }
-
-    private void handleRegister(HttpExchange exchange) {
-
-        addCorsHeaders(exchange);
-
-        Result<Void> result = processRegister(exchange);
-        
-        if (result instanceof Result.Failure failure) {
-
-            System.err.println("Error handling request /user/register: " + failure.exception().getMessage());
-
-        } else {
-
-            System.out.println("Request /user/register: "+exchange.getRemoteAddress()+": ");
-        }
-    }
-
-    private Result<Void> processRegister(HttpExchange exchange) {
-
-        if (!"POST".equals(exchange.getRequestMethod())) {
-
-            System.out.println("Test1");
-
-            return sendResponse(
-                exchange,
-                405, 
-                "Method Not Allowed"
-            );
-        }
-
-        Scanner sc = new Scanner(exchange.getRequestBody()).useDelimiter("\\A");
-        
-        String requestBody = sc.hasNext() ? sc.next() : "";
-
-        sc.close();
-
-        Map<String, String> registerRequest = this.gson.fromJson(
-            requestBody, 
-            new TypeToken<Map<String, String>> () {}.getType()
-        );
-
-        System.out.println(1);
-
-        Result<RegisterStatus> result = this.authService.register(
-            registerRequest.get("name"), 
-            registerRequest.get("email"), 
-            registerRequest.get("password")
-        );
-
-        System.out.println(2);
 
         if (result instanceof Result.Failure f) {
 
             return sendInternalServerError(exchange, f.exception());
         }
 
-        RegisterStatus registerResult = result.expect();
-
-        if (!registerResult.equals(RegisterStatus.SUCCESS)) {
+        if (!result.expect()) {
 
              return sendResponse(
                 exchange, 
-                400, 
-                "Invalid register parameters: "+registerResult.name()
+                404, 
+                "Reservation not found"
             );
         }
 
         return sendResponse(
             exchange, 
             200, 
-            gson.toJson(registerResult)
+            "{}"
         );
     }
 

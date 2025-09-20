@@ -6,13 +6,12 @@ import java.util.Optional;
 
 import data.DatabaseConnection;
 import model.Flight;
-import model.Seat;
 import model.FlightFilter;
 import util.Result;
 
 public class FlightRepository {
 
-    protected final DatabaseConnection database;
+    private final DatabaseConnection database;
 
     public FlightRepository(DatabaseConnection database) {
 
@@ -88,51 +87,6 @@ public class FlightRepository {
                 } while (resultSet.next());
 
                 return flights;
-            }
-        );
-    }
-
-    public Result<Optional<List<Seat>>> getSeatsForFlight(int id) {
-
-        String sql =  """
-            SELECT
-                seats.id,
-                seats.class,
-                CASE
-                    WHEN tickets.seat_id IS NOT NULL THEN 'BOOKED'
-                    WHEN reservations.seat_id IS NOT NULL THEN 'RESERVED'
-                    ELSE 'AVAILABLE'
-                END AS status
-            FROM seats
-            JOIN flights 
-                ON flights.airplane_id = seats.airplane_id
-            LEFT JOIN tickets 
-                ON tickets.flight_id = flights.id 
-                AND tickets.seat_id = seats.id
-            LEFT JOIN reservations
-                ON reservations.flight_id = flights.id
-                AND reservations.seat_id = seats.id
-            WHERE flights.id = ?
-            ORDER BY seats.id
-        """;
-
-        return database.query(
-            sql, 
-            statement -> {
-                statement.setInt(1, id);
-            }, 
-            resultSet -> {
-                List<Seat> seats = new ArrayList<>();
-
-                do {
-                    seats.add(new Seat(
-                        resultSet.getString("id"),
-                        Seat.Class.valueOf(resultSet.getString("class")),
-                        Seat.Status.valueOf(resultSet.getString("status"))
-                    ));
-                } while (resultSet.next());
-                
-                return seats;
             }
         );
     }
