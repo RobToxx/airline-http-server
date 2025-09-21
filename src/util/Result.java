@@ -2,7 +2,6 @@ package util;
 
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 public sealed interface Result<T> permits Result.Success, Result.Failure {
@@ -10,6 +9,11 @@ public sealed interface Result<T> permits Result.Success, Result.Failure {
 	public interface ThrowingSupplier<T> {
 	
 		T get() throws Exception;
+	}
+
+	public interface ThrowingFunction<T, R> {
+	
+		R apply(T value) throws Exception;
 	}
 
 	public static <T> Result<T> of(ThrowingSupplier<T> throwingSupplier) {
@@ -37,7 +41,7 @@ public sealed interface Result<T> permits Result.Success, Result.Failure {
     void ifFailure(Consumer<Exception> action);
     void throwIfFailure() throws Exception;
 
-    <R> Result<R> andThen(Function<T, Result<R>> then);
+    <R> Result<R> andThen(ThrowingFunction<T, R> then);
 
     record Success<T>(T value) implements Result<T>{
 	
@@ -88,9 +92,9 @@ public sealed interface Result<T> permits Result.Success, Result.Failure {
 	   	
 	   	public void ifFailure(Consumer<Exception> action) {}
 
-	   	public <R> Result<R> andThen(Function<T, Result<R>> then) {
+	   	public <R> Result<R> andThen(ThrowingFunction<T, R> then) {
 
-	   		return then.apply(this.value);
+	   		return Result.of(() -> then.apply(this.value));
 	   	}
 
 	   	public void throwIfFailure() {}
@@ -150,7 +154,7 @@ public sealed interface Result<T> permits Result.Success, Result.Failure {
 	   		throw exception;
 	   	}
 
-	   	public <R> Result<R> andThen(Function<T, Result<R>> then) {
+	   	public <R> Result<R> andThen(ThrowingFunction<T, R> then) {
 
 	   		return new Result.Failure<>(exception);
 	   	}
