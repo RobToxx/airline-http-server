@@ -8,6 +8,7 @@ import java.util.UUID;
 import auth.User;
 import model.Booking;
 import model.FlightDetails;
+import model.PassengerType;
 import model.Reservation;
 import model.Seat;
 import model.Seat.Status;
@@ -27,7 +28,7 @@ public class BookingService {
         this.flightService = flightService;
     }
 
-    public Result<Optional<Booking>> bookSeat(int flightId, String seatId, String sessionId) {
+    public Result<Optional<Booking>> bookSeat(int flightId, String seatId, PassengerType passengerType, String sessionId) {
     	
         return Result.of(() -> {
 
@@ -78,7 +79,8 @@ public class BookingService {
                 flightDetails.flight().airplaneId(),
                 seatId,
                 LocalDateTime.now(),
-                new BigDecimal("500.00")
+                passengerType,
+                seat.seatClass() == Seat.Class.FIRST? new BigDecimal("120000.00") : passengerType.price
             );
 
             seatRepository.book(booking).throwIfFailure();
@@ -87,7 +89,7 @@ public class BookingService {
         });
     }
 
-    public Result<Optional<Reservation>> reserveSeat(int flightId, String seatId, String sessionId) {
+    public Result<Optional<Reservation>> reserveSeat(int flightId, String seatId, PassengerType passengerType, String sessionId) {
         
         return Result.of(() -> {
 
@@ -131,7 +133,9 @@ public class BookingService {
                 flightId,
                 flightDetails.flight().airplaneId(),
                 seatId,
-                LocalDateTime.now().minusMinutes(30)
+                LocalDateTime.now().minusMinutes(30),
+                passengerType,
+                seat.seatClass() == Seat.Class.FIRST? new BigDecimal("120000.00") : passengerType.price
             );
 
             seatRepository.reserve(reservation).throwIfFailure();

@@ -9,6 +9,7 @@ public record Booking (
 	int airplaneId,
 	String seatId,
 	LocalDateTime purchaseDate,
+	PassengerType passengerType,
 	BigDecimal price
 ) {
 

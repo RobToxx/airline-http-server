@@ -24,7 +24,7 @@ public class SeatRepository {
 
     	String sql = """
     		INSERT INTO bookings
-    		VALUES (DEFAULT, ?, ?, ?, ?, ?, ?)
+    		VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?)
     	""";
 
     	return this.database.modify(
@@ -35,7 +35,8 @@ public class SeatRepository {
     			statement.setInt(3, booking.airplaneId());
     			statement.setString(4, booking.seatId());
     			statement.setTimestamp(5, Timestamp.valueOf(booking.purchaseDate()));
-    			statement.setBigDecimal(6, booking.price());
+                statement.setString(6, booking.passengerType().name());
+    			statement.setBigDecimal(7, booking.price());
     		}
     	).andThen(value -> null);
     }

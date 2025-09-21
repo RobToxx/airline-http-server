@@ -5,8 +5,6 @@ import com.sun.net.httpserver.HttpServer;
 
 import data.DatabaseConnection;
 import data.PostgreSQLConnection;
-import model.Flight;
-import model.Seat;
 import repository.FlightRepository;
 import repository.SeatRepository;
 import repository.SessionRepository;
@@ -19,12 +17,38 @@ import controller.BookingController;
 import controller.FlightController;
 
 import generators.*;
-
+import model.Flight;
+import model.Seat;
 import util.Result;
 
 public class Main {
-    
+
     public static void main(String[] args) {
+        
+        while (true) {
+            try {
+                startServer();
+
+            } catch (Exception e) {
+
+                System.err.println("Server crashed: " + e.getMessage());
+                e.printStackTrace();
+
+                try {
+                    Thread.sleep(5000);
+
+                } catch (InterruptedException ie) {
+
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+
+                System.out.println("Restarting server...");
+            }
+        }
+    }
+    
+    public static void startServer() {
 
         DatabaseConnection database = PostgreSQLConnection.create(
             "jdbc:postgresql://192.168.1.170:5432/", 
@@ -32,8 +56,7 @@ public class Main {
             "Admin1234$"
         ).expect("Unable to connect to the database.");
 
-        /*
-        GenerationRepository genRepo = new GenerationRepository(connection);
+        GenerationRepository genRepo = new GenerationRepository(database);
 
         genRepo.removeAll();
 
@@ -44,7 +67,6 @@ public class Main {
         genRepo.addAirplanes(airplanes);
         genRepo.addFlights(flights);
         for (Airplane airplane : airplanes) genRepo.addSeats(airplane.id(), seats);
-        */
 
         FlightRepository flightRepository = new FlightRepository(database);
         SessionRepository sessionRepository = new SessionRepository(database);
@@ -72,5 +94,9 @@ public class Main {
         server.start();
         
         System.out.println("Listening in 8000");
+
+        try {
+            Thread.currentThread().join();
+        } catch (InterruptedException ignored) {}
     }
 }

@@ -13,6 +13,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import model.Booking;
+import model.PassengerType;
 import model.Reservation;
 import service.BookingService;
 import util.LocalDateTimeAdapter;
@@ -80,6 +81,7 @@ public class BookingController {
         Result<Optional<Booking>> result = bookingService.bookSeat(
             Integer.parseInt(bookRequest.get("flightId")), 
             bookRequest.get("seatId"), 
+            PassengerType.valueOf(bookRequest.get("passengerType")),
             bookRequest.get("sessionId")
         );
 
@@ -147,6 +149,7 @@ public class BookingController {
         Result<Optional<Reservation>> result = bookingService.reserveSeat(
             Integer.parseInt(reserveRequest.get("flightId")), 
             reserveRequest.get("seatId"), 
+            PassengerType.valueOf(reserveRequest.get("passengerType")),
             reserveRequest.get("sessionId")
         );
 

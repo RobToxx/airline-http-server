@@ -1,5 +1,6 @@
 package model;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record Reservation (
@@ -8,7 +9,9 @@ public record Reservation (
 	int flightid,
 	int airplaneId,
 	String seatId,
-	LocalDateTime expirationDate
+	LocalDateTime expirationDate,
+	PassengerType passengerType,
+	BigDecimal price
 ) {
 
 }

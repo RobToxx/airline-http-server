@@ -1,5 +1,5 @@
 DROP TABLE reservations;
-DROP TABLE tickets;
+DROP TABLE bookings;
 DROP TABLE sessions;
 DROP TABLE users;
 DROP TABLE flights;
@@ -50,7 +50,9 @@ CREATE TABLE bookings (
     airplane_id  INTEGER NOT NULL,
     seat_id      VARCHAR(3) NOT NULL,
     purchase_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    passenger_type VARCHAR(6) NOT NULL,
     price        NUMERIC NOT NULL,
+    CHECK (passenger_type IN ('CHILD', 'ADULT', 'SENIOR')),
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (flight_id) REFERENCES flights(id),
     FOREIGN KEY (airplane_id) REFERENCES airplanes(id),
