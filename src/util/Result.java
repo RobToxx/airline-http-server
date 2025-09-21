@@ -39,7 +39,6 @@ public sealed interface Result<T> permits Result.Success, Result.Failure {
 
     void ifSuccess(Consumer<T> action);
     void ifFailure(Consumer<Exception> action);
-    void throwIfFailure() throws Exception;
 
     <R> Result<R> andThen(ThrowingFunction<T, R> then);
 
@@ -97,7 +96,6 @@ public sealed interface Result<T> permits Result.Success, Result.Failure {
 	   		return Result.of(() -> then.apply(this.value));
 	   	}
 
-	   	public void throwIfFailure() {}
 	}
 
 	record Failure<T>(Exception exception) implements Result<T>{
@@ -147,11 +145,6 @@ public sealed interface Result<T> permits Result.Success, Result.Failure {
 	   	public void ifFailure(Consumer<Exception> action) { 
 
 	   		action.accept(exception); 
-	   	}
-
-	   	public void throwIfFailure() throws Exception {
-
-	   		throw exception;
 	   	}
 
 	   	public <R> Result<R> andThen(ThrowingFunction<T, R> then) {

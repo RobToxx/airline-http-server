@@ -83,7 +83,7 @@ public class BookingService {
                 seat.seatClass() == Seat.Class.FIRST? new BigDecimal("120000.00") : passengerType.price
             );
 
-            seatRepository.book(booking).throwIfFailure();
+            seatRepository.book(booking).orElseThrow();
 
             return Optional.of(booking);
         });
@@ -138,7 +138,7 @@ public class BookingService {
                 seat.seatClass() == Seat.Class.FIRST? new BigDecimal("120000.00") : passengerType.price
             );
 
-            seatRepository.reserve(reservation).throwIfFailure();
+            seatRepository.reserve(reservation).orElseThrow();
 
             return Optional.of(reservation);
         });

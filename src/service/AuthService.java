@@ -45,7 +45,7 @@ public class AuthService {
 				LocalDateTime.now().plusHours(2)
 			);
 
-			sessionRepository.saveSession(session).throwIfFailure();
+			sessionRepository.saveSession(session).orElseThrow();
 
 			return Optional.of(
 				session
