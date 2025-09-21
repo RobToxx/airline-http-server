@@ -122,6 +122,8 @@ public class BookingController {
 
             System.out.println("Request /seat/reserve: "+exchange.getRemoteAddress()+": ");
         }
+
+        exchange.close();
     }
 
     private Result<Void> processReserve(HttpExchange exchange) {
@@ -264,6 +266,8 @@ public class BookingController {
 
             os.write(bytes);
 
+            exchange.getResponseBody().close();
+
             return null;
         });
     }
@@ -271,7 +275,14 @@ public class BookingController {
     private void addCorsHeaders(HttpExchange exchange) {
 
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+        if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+             try {
+                exchange.sendResponseHeaders(200, -1);
+            } catch(Exception e) {}
+            exchange.close();
+        }
     }
 }

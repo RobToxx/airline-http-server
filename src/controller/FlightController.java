@@ -41,6 +41,8 @@ public class FlightController {
 
     private void handleSearch(HttpExchange exchange) {
 
+        System.out.println("Intento");
+
         addCorsHeaders(exchange);
 
         Result<Void> result = processSearch(exchange);
@@ -74,12 +76,16 @@ public class FlightController {
 
         Result<Map<String, String>> paramsResult = parseQuery(exchange.getRequestURI().getQuery());
 
+        System.out.println(exchange.getRequestURI().getQuery());
+
         if (paramsResult instanceof Result.Failure) {
 
             return sendResponse(exchange, 405, "Invalid Query Structure");
         }
 
         Result<List<Flight>> result = flightService.search(paramsResult.expect());
+
+        System.out.println(this.gson.toJson(result));
 
         switch (result) {
             case Result.Success<List<Flight>> s -> {
@@ -187,6 +193,8 @@ public class FlightController {
 
             os.write(bytes);
 
+            exchange.getResponseBody().close();
+
             return null;
         });
     }
@@ -195,6 +203,13 @@ public class FlightController {
 
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
         exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+        if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+             try {
+                exchange.sendResponseHeaders(200, -1);
+            } catch(Exception e) {}
+            exchange.close();
+        }
     }
 }
