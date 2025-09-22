@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Cuenta</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1>Crear una Cuenta 🧑‍✈️</h1>
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="name">Nombre</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit">Registrarse</button>
+            </form>
+                <div id="register-status" class="status-message"></div>
+                    <p class="auth-switch">¿Ya tienes una cuenta? <a href="login.html">Inicia sesión</a></p>
+        </div>
+    </div>
+    <script src="register.js"></script>
+</body>
+</html>

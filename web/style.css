@@ -1,0 +1,436 @@
+/* --- CONFIGURACIÓN GLOBAL Y NUEVA FUENTE --- */
+body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f8f9fa; /* Un gris muy claro */
+    color: #495057;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* --- SECCIÓN HERO PARA LA BÚSQUEDA --- */
+.hero {
+    background: linear-gradient(135deg, #0061ff, #60efff);
+    color: white;
+    padding: 4rem 2rem;
+    text-align: center;
+}
+.hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    border: none;
+    color: white;
+}
+.hero p {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+}
+
+/* --- CONTENEDOR PRINCIPAL Y TÍTULOS --- */
+.container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 2rem;
+}
+h1, h2 {
+    color: #212529;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 10px;
+}
+h4 {
+    border: none;
+    font-size: 1.2em;
+    text-align: left;
+}
+
+/* --- FORMULARIO CON ESTILO MEJORADO --- */
+#search-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 1.5rem;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
+.form-group {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+label {
+    margin-bottom: 0.5rem;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+input[type="text"], input[type="date"], select {
+    padding: 12px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: 1em;
+    font-family: 'Poppins', sans-serif;
+    transition: box-shadow 0.2s;
+}
+input:focus, select:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.6);
+}
+
+/* --- BOTONES CON MÁS PERSONALIDAD --- */
+button {
+    padding: 14px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+}
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3);
+}
+button:disabled {
+    background-color: #aaa;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+.link-button {
+    background: none; border: none; color: #007bff; padding: 0;
+    font-size: inherit; cursor: pointer; box-shadow: none;
+}
+.link-button:hover { text-decoration: underline; transform: none; box-shadow: none; }
+
+
+/* --- TARJETAS DE VUELO --- */
+.flight-card {
+    border: 1px solid #dee2e6;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    background-color: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.flight-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+.flight-card p { margin: 5px 0; }
+
+
+/* --- DISEÑO DEL AVIÓN Y ASIENTOS --- */
+.airplane {
+    background: #f0f2f5; /* Un fondo ligeramente más oscuro para contrastar */
+    border: 2px solid #ced4da;
+    border-radius: 40px;
+    padding: 30px 20px;
+    margin: 2rem auto;
+    max-width: 550px; /* Un poco más ancho para dar espacio */
+    position: relative;
+    padding-bottom: 80px; /* Más espacio para la cola */
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1); /* Sombra para que destaque */
+}
+.cockpit, .tail {
+    position: absolute;
+    width: 100px; /* Más grande */
+    height: 100px; /* Más grande */
+    background: #e9ecef;
+    border: 2px solid #adb5bd;
+    z-index: 1; /* Para que esté encima del padding del avión */
+}
+.cockpit {
+    top: -35px; /* Ajuste de posición */
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 50% 50% 20% 20% / 100% 100% 20% 20%; /* Más forma de cabina */
+}
+.tail {
+    bottom: -35px; /* Ajuste de posición */
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 20% 20% 50% 50% / 20% 20% 100% 100%; /* Más forma de cola */
+}
+.cabin {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Espacio entre filas de asientos */
+    padding: 10px; /* Pequeño padding interno */
+}
+.seat-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px; /* Espacio más ajustado entre asientos */
+}
+.aisle-first-class {
+    width: 60px; /* Pasillo más ancho para Primera Clase */
+    flex-shrink: 0;
+}
+.aisle-economy-class {
+    width: 45px; /* Pasillo adecuado para Clase Turista */
+    flex-shrink: 0;
+}
+.cabin h4 {
+    text-align: center;
+    width: 100%;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    color: #495057;
+    font-size: 1.3em; /* Un poco más grande */
+    font-weight: 700; /* Más destacado */
+    border-bottom: 1px solid #e9ecef; /* Una línea para separar */
+    padding-bottom: 5px;
+}
+/* Eliminamos los estilos antiguos de .seat-map que ya no se usan */
+.seat-map, .first-class, .tourist-class {
+    display: contents;
+}
+
+
+/* --- ESTILOS DE ASIENTOS REFINADOS --- */
+.seat {
+    font-size: 0.75em; /* Ligeramente más pequeños */
+    font-weight: 600;
+    width: 32px; /* Ancho ajustado */
+    height: 38px; /* Altura ajustada para dar forma rectangular */
+    line-height: 38px;
+    border: 1px solid #adb5bd;
+    background-color: white;
+    border-radius: 6px 6px 2px 2px; /* Bordes superiores más suaves */
+    cursor: pointer;
+    text-align: center;
+    color: #495057;
+    position: relative;
+    transition: all 0.2s ease-out;
+    flex-shrink: 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Pequeña sombra para profundidad */
+}
+.seat.available:hover {
+    background-color: #e6f2ff; /* Color de hover más suave */
+    border-color: #007bff;
+    transform: scale(1.08); /* Menos exagerado */
+}
+.seat.occupied {
+    background-color: #e9ecef; /* Un gris un poco más claro para ocupado */
+    color: #868e96; /* Color de texto más tenue */
+    border-color: #ced4da;
+    cursor: not-allowed;
+}
+.seat.occupied[aria-disabled="true"] {
+    pointer-events: none;
+}
+.seat.selected {
+    background-color: #28a745;
+    color: white;
+    border-color: #1e7e34;
+    transform: scale(1.1); /* Menos exagerado */
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.4);
+}
+
+
+/* --- CONTROLES DE RESERVA (tipo de pasajero y botones) --- */
+.controls-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    padding: 1.8rem; /* Más padding */
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    background-color: #fff;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.05); /* Sombra más pronunciada */
+}
+.controls-area .form-group {
+    width: 100%;
+    max-width: 300px;
+    margin-bottom: 0;
+}
+.controls-area button {
+    width: 100%;
+    max-width: 300px;
+    margin-top: 0.5rem;
+}
+#reservation-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 300px;
+    gap: 0.5rem;
+}
+
+
+/* --- SPINNER DE CARGA --- */
+.spinner-container {
+    display: none; position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); z-index: 100;
+}
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px;
+    border-radius: 50%; border-left-color: #007bff;
+    animation: spin 1s ease infinite;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+
+/* --- TEMPORIZADOR --- */
+.countdown-timer {
+    font-size: 1.1em;
+    font-weight: 500;
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c2c7;
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin-bottom: 1rem;
+    text-align: center;
+    width: 100%;
+}
+.countdown-timer span {
+    font-weight: 700;
+}
+
+
+/* --- PÁGINAS DE LOGIN Y REGISTRO --- */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0061ff, #60efff);
+    padding: 2rem;
+    box-sizing: border-box;
+}
+.auth-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+.auth-card h1 {
+    border: none;
+    margin-bottom: 2rem;
+}
+.auth-card .form-group {
+    text-align: left;
+    margin-bottom: 1rem;
+}
+.auth-card button {
+    width: 100%;
+    margin-top: 1rem;
+}
+.status-message {
+    margin-top: 1rem;
+    font-weight: 500;
+}
+.auth-switch {
+    margin-top: 2rem;
+    font-size: 0.9em;
+}
+.auth-switch a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 600;
+}
+.auth-switch a:hover {
+    text-decoration: underline;
+}
+
+/* --- NUEVOS ESTILOS PARA LAYOUT DE DETALLES Y RESUMEN --- */
+
+.details-container {
+    display: flex;
+    flex-wrap: wrap; /* Permite que se apilen en pantallas pequeñas */
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.airplane {
+    flex: 2; /* El avión ocupa más espacio */
+    min-width: 450px;
+}
+
+.summary-panel {
+    flex: 1; /* El resumen ocupa menos espacio */
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+    border: 1px solid #e9ecef;
+    min-width: 300px;
+    align-self: stretch; /* Hace que tenga la misma altura que el avión */
+}
+
+.summary-panel h4 {
+    margin-top: 0;
+    text-align: center;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.summary-placeholder {
+    color: #868e96;
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.summary-panel ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.summary-panel li {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    align-items: center;
+    padding: 12px 5px;
+    border-bottom: 1px solid #f8f9fa;
+    font-size: 0.9em;
+}
+.summary-panel li span:last-child {
+    text-align: right;
+    font-weight: 600;
+}
+
+.summary-panel .subtotal {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    font-size: 1.2em;
+    padding: 15px 5px;
+    margin-top: 10px;
+    color: #212529;
+}
+
+#reservation-actions button {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+/* --- ESTILOS PARA LA PÁGINA DE PERFIL (MIS VUELOS) --- */
+
+#reservations-container .flight-card {
+    border-left: 5px solid #007bff; /* Un acento de color a la izquierda */
+    margin-bottom: 1.5rem;
+}
+
+#reservations-container .flight-card p {
+    margin: 8px 0; /* Un poco más de espacio vertical */
+    font-size: 1.05em;
+}
+
+#reservations-container .flight-card p strong {
+    color: #343a40; /* Un color más oscuro para las etiquetas */
+    min-width: 120px; /* Alinea los valores */
+    display: inline-block;
+}

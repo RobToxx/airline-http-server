@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Vuelos</title>
+
+    <!-- Fuente personalizada de Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Enlace a la hoja de estilos -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Nueva sección "Hero" para el formulario de búsqueda -->
+    <header class="hero">
+        <div class="hero-content">
+            <h1>Encuentra tu Próximo Vuelo ✈️</h1>
+            <p>Busca entre cientos de destinos al mejor precio.</p>
+            <form id="search-form">
+                <div class="form-group">
+                    <label for="origin">Origen</label>
+                    <input type="text" id="origin" placeholder="CDMX">
+                </div>
+                <div class="form-group">
+                    <label for="destination">Destino</label>
+                    <input type="text" id="destination" placeholder="Puebla">
+                </div>
+                <div class="form-group">
+                    <label for="fromDate">Desde</label>
+                    <input type="date" id="fromDate" placeholder="2025-10-01">
+                </div>
+                <div class="form-group">
+                    <label for="toDate">Hasta</label>
+                    <input type="date" id="toDate" placeholder="2025-10-15">
+                </div>
+                <button type="submit" id="submit-button">Buscar</button>
+            </form>
+        </div>
+    </header>
+
+    <!-- El contenedor principal ahora es solo para los resultados y el estado -->
+    <main class="container">
+        <div id="user-status"></div>
+        
+        <!-- Contenedor para el spinner de carga -->
+        <div class="spinner-container" id="spinner">
+            <div class="spinner"></div>
+        </div>
+        
+        <!-- Div para mensajes de estado (errores, etc.) -->
+        <div id="status"></div>
+        
+        <h2>Resultados</h2>
+        
+        <!-- Aquí se insertarán los resultados de los vuelos -->
+        <div id="results-container"></div>
+    </main>
+
+    <!-- El script de JavaScript se carga al final para un mejor rendimiento -->
+    <script src="app.js?v=1.0"></script>
+</body>
+</html>
