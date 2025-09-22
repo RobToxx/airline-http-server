@@ -122,8 +122,6 @@ public class BookingController {
 
             System.out.println("Request /seat/reserve: "+exchange.getRemoteAddress()+": ");
         }
-
-        exchange.close();
     }
 
     private Result<Void> processReserve(HttpExchange exchange) {
@@ -148,6 +146,8 @@ public class BookingController {
             new TypeToken<Map<String, String>> () {}.getType()
         );
 
+        System.out.println(reserveRequest);
+
         Result<Optional<Reservation>> result = bookingService.reserveSeat(
             Integer.parseInt(reserveRequest.get("flightId")), 
             reserveRequest.get("seatId"), 
@@ -167,9 +167,11 @@ public class BookingController {
             return sendResponse(
                 exchange, 
                 409, 
-                "Unabe to complete reservation"
+                "Unable to complete reservation"
             );
         }
+
+        System.out.println(reserveOpt);
 
         return sendResponse(
             exchange, 
@@ -279,7 +281,8 @@ public class BookingController {
         exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
         if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
-             try {
+
+            try {
                 exchange.sendResponseHeaders(200, -1);
             } catch(Exception e) {}
             exchange.close();

@@ -51,11 +51,12 @@ public class Main {
     public static void startServer() {
 
         DatabaseConnection database = PostgreSQLConnection.create(
-            "jdbc:postgresql://192.168.1.170:5432/", 
+            "jdbc:postgresql://192.168.56.101:5432/", 
             "postgres", 
             "Admin1234$"
         ).expect("Unable to connect to the database.");
 
+        /*
         GenerationRepository genRepo = new GenerationRepository(database);
 
         genRepo.removeAll();
@@ -67,6 +68,7 @@ public class Main {
         genRepo.addAirplanes(airplanes);
         genRepo.addFlights(flights);
         for (Airplane airplane : airplanes) genRepo.addSeats(airplane.id(), seats);
+        */
 
         FlightRepository flightRepository = new FlightRepository(database);
         SessionRepository sessionRepository = new SessionRepository(database);

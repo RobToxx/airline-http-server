@@ -48,7 +48,7 @@ public class GenerationRepository {
                     statement.setInt(x+1, flights.get(i).airplaneId());
                     statement.setString(x+2, flights.get(i).origin());
                     statement.setString(x+3, flights.get(i).destination());
-                    statement.setTimestamp(x+4, Timestamp.valueOf(flights.get(i).date()));
+                    statement.setTimestamp(x+4, Timestamp.valueOf(flights.get(i).departure()));
                 }
             }
         ).expect();

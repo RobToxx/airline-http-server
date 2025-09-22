@@ -299,7 +299,7 @@ public class AuthController {
         exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
         if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
-             try {
+            try {
                 exchange.sendResponseHeaders(200, -1);
             } catch(Exception e) {}
             exchange.close();

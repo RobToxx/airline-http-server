@@ -31,22 +31,17 @@ public class BookingService {
     public Result<Optional<Booking>> bookSeat(int flightId, String seatId, PassengerType passengerType, String sessionId) {
     	
         return Result.of(() -> {
-
             Optional<User> userOpt = authService.validateSession(sessionId).orElseThrow();
 
-            if (userOpt.isEmpty()) {
-
+            if (userOpt.isEmpty())
                 return Optional.empty();
-            }
 
             User user = userOpt.get();
 
             Optional<FlightDetails> flightOpt = flightService.getFlightDetails(flightId).orElseThrow();
 
-            if (flightOpt.isEmpty()) {
-
+            if (flightOpt.isEmpty())
                 return Optional.empty();
-            }
 
             FlightDetails flightDetails = flightOpt.get();
 
@@ -54,24 +49,18 @@ public class BookingService {
                 .filter(seat -> seat.id().equals(seatId))
                 .findAny();
 
-            if (seatOpt.isEmpty()) {
-
+            if (seatOpt.isEmpty())
                 return Optional.empty();
-            }
 
             Seat seat = seatOpt.get();
 
-            if (seat.status() == Status.BOOKED) {
-
+            if (seat.status() == Status.BOOKED)
                 return Optional.empty();
-            }
 
             Optional<Integer> ownerIdOpt = seatRepository.getReservationOwnerId(flightId, seatId).orElseThrow();
 
-            if (ownerIdOpt.isPresent() && ownerIdOpt.get() != user.id()) {
-
+            if (ownerIdOpt.isPresent() && ownerIdOpt.get() != user.id())
                 return Optional.empty();
-            }
 
             Booking booking = new Booking(
                 user.id(),

@@ -51,6 +51,8 @@ public class FlightController {
 
             System.err.println("Error handling request /flight/search: " + failure.exception().getMessage());
         }
+
+        exchange.close();
     }
 
     private void handleFlight(HttpExchange exchange) {
@@ -84,8 +86,6 @@ public class FlightController {
         }
 
         Result<List<Flight>> result = flightService.search(paramsResult.expect());
-
-        System.out.println(this.gson.toJson(result));
 
         switch (result) {
             case Result.Success<List<Flight>> s -> {

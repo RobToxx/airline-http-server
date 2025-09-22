@@ -6,7 +6,7 @@ public final record Flight(
 	int id,
 	String origin,
 	String destination,
-	LocalDateTime date,
+	LocalDateTime departure,
 	int airplaneId
 ) {
 	
