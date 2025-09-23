@@ -210,18 +210,27 @@ button:disabled {
     flex-shrink: 0;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Pequeña sombra para profundidad */
 }
-.seat.available:hover {
+.seat.AVAILABLE:hover {
     background-color: #e6f2ff; /* Color de hover más suave */
     border-color: #007bff;
     transform: scale(1.08); /* Menos exagerado */
 }
-.seat.occupied {
+.seat.RESERVED {
     background-color: #e9ecef; /* Un gris un poco más claro para ocupado */
     color: #868e96; /* Color de texto más tenue */
     border-color: #ced4da;
     cursor: not-allowed;
 }
-.seat.occupied[aria-disabled="true"] {
+.seat.BOOKED {
+    background-color: #f5c6cb; /* Un gris un poco más claro para ocupado */
+    color: #eb7a85; /* Color de texto más tenue */
+    border-color: #ced4da;
+    cursor: not-allowed;
+}
+.seat.RESERVED[aria-disabled="true"] {
+    pointer-events: none;
+}
+.seat.BOOKED[aria-disabled="true"] {
     pointer-events: none;
 }
 .seat.selected {

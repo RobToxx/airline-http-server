@@ -1,4 +1,4 @@
-const API_URL = 'http://10.60.0.220:8000';
+const API_URL = 'http://187.132.146.115:8000';
 
 // Seleccionamos los elementos del DOM
 const searchForm = document.getElementById('search-form');
@@ -99,9 +99,60 @@ function displayFlights(flights) {
     });
 }
 
+let pollingIntervalId = null;
+let keepPolling = false;
+
+function startPolling(flightId) {
+    stopPolling(); // por si ya hay uno activo
+    pollingIntervalId = setInterval(() => {
+        updateSeatStatuses(flightId);
+    }, 500); // cada 5 segundos
+}
+
+function stopPolling() {
+    if (pollingIntervalId) {
+        clearInterval(pollingIntervalId);
+        pollingIntervalId = null;
+    }
+}
+
+async function updateSeatStatuses(flightId) {
+
+    const response = await fetch(`${API_URL}/flight?id=${flightId}`, {});
+    
+    if (!response.ok) throw new Error('No se pudieron obtener los detalles del vuelo.');
+
+    flightDetails = await response.json();
+
+    flightDetails.seats.forEach(seat => {
+
+        const seatDiv = document.getElementById(`seat-${seat.id}`);
+
+        if (!seatDiv) return;
+
+        seatDiv.classList.remove('AVAILABLE');
+        seatDiv.classList.remove('RESERVED');
+        seatDiv.classList.remove('BOOKED');
+
+        seatDiv.classList.add(`${seat.status}`);
+
+        if (seat.status === 'AVAILABLE' || seatDiv.classList.contains('selected')) {
+
+            seatDiv.setAttribute('onclick', `selectSeat('${seat.id}', this)`);
+            seatDiv.removeAttribute('aria-disabled');
+
+            return;
+        }
+
+        seatDiv.removeAttribute('onclick');
+        seatDiv.setAttribute('aria-disabled', 'true');
+    });
+}
+
 async function getFlightDetails(flightId) {
+
+    console.log(selectedSeats);
     statusDiv.innerHTML = '';
-    spinner.style.display = 'block';
 
     try {
         const response = await fetch(`${API_URL}/flight?id=${flightId}`, {
@@ -135,9 +186,11 @@ async function getFlightDetails(flightId) {
             }
             cabinHTML += '<div class="seat-row">';
             rowSeats.forEach(seat => {
+                const isSelected = selectedSeats.find(s => s.id === seat.id)? 'selected' : '';
                 const isAvailable = seat.status === 'AVAILABLE';
-                const clickHandler = isAvailable ? `onclick="selectSeat('${seat.id}', this)"` : '';
-                cabinHTML += `<div class="seat ${isAvailable ? 'available' : 'occupied'}" ${isAvailable ? '' : `aria-disabled="true"`} ${clickHandler}>${seat.id}</div>`;
+                const clickHandler = isAvailable || isSelected? `onclick="selectSeat('${seat.id}', this)"` : '';
+
+                cabinHTML += `<div id="seat-${seat.id}" class="${isSelected} seat ${seat.status}" ${isAvailable || isSelected? '' : `aria-disabled="true"`} ${clickHandler}>${seat.id}</div>`;
                 if (currentClass === 'FIRST' && seat.id.endsWith('C') && rowSeats.length > 3) {
                     cabinHTML += '<div class="aisle-first-class"></div>';
                 } else if (currentClass === 'ECONOMY' && seat.id.endsWith('C') && rowSeats.length > 3) {
@@ -149,67 +202,61 @@ async function getFlightDetails(flightId) {
 
         detailsDiv.innerHTML = `
             <h2>Selecciona tu asiento</h2>
+            <button onclick="showSearchForm()">Volver a la Búsqueda</button>
             <div class="details-container">
                 <div class="airplane">
                     <div class="cockpit"></div><div class="cabin">${cabinHTML}</div><div class="tail"></div>
                 </div>
                 <div id="summary-panel" class="summary-panel"></div>
             </div>
-            <div class="controls-area">
-                <div class="form-group">
-                    <label for="passenger-type">Tipo de Pasajero</label>
-                    <select id="passenger-type">
-                        <option value="ADULT">Adulto</option><option value="CHILD">Niño</option><option value="SENIOR">Adulto Mayor</option>
-                    </select>
-                </div>
-                <div id="reservation-actions"></div>
-                <button onclick="showSearchForm()">Volver a la Búsqueda</button>
-            </div>
         `;
         resultsContainer.appendChild(detailsDiv);
         updateSummaryPanel();
+        startPolling(flightId);
     } catch (error) {
         statusDiv.innerHTML = `<p style="color: red;">${error.message}</p>`;
     } finally {
-        spinner.style.display = 'none';
     }
 }
 
 function selectSeat(seatId, seatElement) {
-    if (countdownTimer) return;
-
-    const seatIndex = selectedSeats.findIndex(s => s.id === seatId);
 
     const seatData = currentFlightDetails.seats.find(s => s.id === seatId);
 
-    if (seatIndex > -1) {
-        selectedSeats.splice(seatIndex, 1);
+    console.log(selectedSeats);
+    console.log(selectedSeats.find(s => {
+
+        console.log(`i ${s.id}`);
+        console.log(`d ${seatId}`);
+        return s.id === seatId
+    }))
+
+    if (selectedSeats.find(s => s.id === seatId)) {
+
+        console.log("Deselect")
+
+        selectedSeats = selectedSeats.filter(r => r.id !== seatId);
         seatElement.classList.remove('selected');
-    } else {
-        selectedSeats.push({
-            id: seatData.id,
-            class: seatData.seatClass
-        });
-        seatElement.classList.add('selected');
+
+        cancelarReserva(
+            currentFlightDetails.flight.id,
+            currentReservations.find(r => r.seatId === seatId).id 
+        );
+
+        return;
     }
 
-    const actionsDiv = document.getElementById('reservation-actions');
-    if (actionsDiv) {
-        if (selectedSeats.length > 0) {
-            actionsDiv.innerHTML = `<button onclick="reservarAsiento(${currentFlightDetails.flight.id})">Apartar Asientos por 10 min</button>`;
-        } else {
-            actionsDiv.innerHTML = '';
-        }
-    }
+    selectedSeats.push({
+            id: seatData.id,
+            class: seatData.seatClass
+    });
+    seatElement.classList.add('selected');
+
+    reservarAsiento(currentFlightDetails.flight.id, seatData.id);
 }
 
 function updateSummaryPanel() {
     const summaryPanel = document.getElementById('summary-panel');
-    const actionsDiv = document.getElementById('reservation-actions');
-
-    if (!actionsDiv) {
-        return;
-    }
 
     let subtotal = 0;
     let summaryHTML = '<h4>Resumen de Reserva</h4>';
@@ -218,25 +265,91 @@ function updateSummaryPanel() {
     if (seatsToShow.length === 0) {
         summaryHTML += '<p class="summary-placeholder">Selecciona uno o más asientos en el mapa.</p>';
     } else {
+        //
         summaryHTML += '<ul>';
         seatsToShow.forEach(seat => {
             summaryHTML += `
                 <li>
-                    <span>Asiento: <b>${seat.seatId}</b> (${seat.seatClass})</span>
+                    <span>Asiento: <b>${seat.seatId}</b></span>
                     <span>${seat.passengerType}</span>
                     <span>$${seat.price.toFixed(2)}</span>
+                    <span><select onchange="modifyReserve(this, '${seat.id}', ${seat.flightid}, '${seat.seatId}')">
+                        <option value="ADULT" ${seat.passengerType == 'ADULT' ? 'selected' : ''}>Adulto</option>
+                        <option value="CHILD" ${seat.passengerType == 'CHILD' ? 'selected' : ''}>Niño</option>
+                        <option value="SENIOR" ${seat.passengerType == 'SENIOR' ? 'selected' : ''}>Adulto Mayor</option>
+                    </select></span>
                 </li>
             `;
             subtotal += seat.price;
         });
         summaryHTML += '</ul>';
         summaryHTML += `<hr><div class="subtotal"><span>Subtotal:</span><span>$${subtotal.toFixed(2)}</span></div>`;
+        summaryHTML += `<button onclick="comprarAsientos()">Confirmar Compra</button>`;
     }
 
     summaryPanel.innerHTML = summaryHTML;
 }
 
-async function reservarAsiento(flightId) {
+async function modifyReserve(selectElement, id, flightId, seatId) {
+
+    console.log("Modifiying")
+
+    const sessionId = localStorage.getItem('sessionId');
+
+    if (!sessionId) {
+        alert("Por favor, inicia sesión para poder reservar.");
+        window.location.href = 'login.html';
+        return;
+    }
+
+    var passengerType = selectElement.value;
+
+    currentReservations = currentReservations.filter(r => r.id !== id);
+
+    spinner.style.display = 'block';
+
+    try {
+            const responseDelete = await fetch(`${API_URL}/seat/unreserve`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    reservationId: id
+                })
+            });
+
+            console.log(`Enviando reserva para el asiento: ${seatId}`);
+            const response = await fetch(`${API_URL}/seat/reserve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    flightId: flightId,
+                    seatId: seatId,
+                    sessionId: sessionId,
+                    passengerType: passengerType
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `No se pudo reservar el asiento ${seat.id}. Es posible que ya no esté disponible.`);
+            }
+
+            const result = await response.json();
+
+        currentReservations.push(result);
+
+        console.log("Si se actualizo")
+
+        updateSummaryPanel();
+    } catch (error) {
+        alert(error.message);
+        getFlightDetails(flightId);
+    } finally {
+        spinner.style.display = 'none';
+    }
+}
+
+async function reservarAsiento(flightId, seatId) {
     const sessionId = localStorage.getItem('sessionId');
     if (!sessionId) {
         alert("Por favor, inicia sesión para poder reservar.");
@@ -250,21 +363,16 @@ async function reservarAsiento(flightId) {
 
     spinner.style.display = 'block';
 
-    const successfulReservations = [];
-    const passengerTypeSelect = document.getElementById('passenger-type');
-    const passengerType = passengerTypeSelect ? passengerTypeSelect.value : 'ADULT';
-
     try {
-        for (const seat of selectedSeats) {
-            console.log(`Enviando reserva para el asiento: ${seat.id}`);
+            console.log(`Enviando reserva para el asiento: ${seatId}`);
             const response = await fetch(`${API_URL}/seat/reserve`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     flightId: flightId,
-                    seatId: seat.id,
+                    seatId: seatId,
                     sessionId: sessionId,
-                    passengerType: passengerType
+                    passengerType: 'ADULT'
                 })
             });
 
@@ -274,23 +382,9 @@ async function reservarAsiento(flightId) {
             }
 
             const result = await response.json();
-            successfulReservations.push(result);
-        }
 
-        currentReservations = successfulReservations;
-        selectedSeats = [];
+        currentReservations.push(result)
 
-        const actionsDiv = document.getElementById('reservation-actions');
-
-        if (currentReservations.length > 0) {
-            currentReservationId = currentReservations[0].reservationId;
-            actionsDiv.innerHTML = `
-                <div class="countdown-timer">Tienes <span id="timer">10:00</span> para comprar</div>
-                <button id="book-button" onclick="comprarAsiento('${currentReservationId}')">Comprar Ahora</button>
-                <button class="link-button" onclick="cancelarReserva(true, ${flightId})">Cancelar Apartado</button>
-            `;
-            startCountdown(10 * 60, flightId);
-        }
         updateSummaryPanel();
     } catch (error) {
         alert(error.message);
@@ -300,17 +394,23 @@ async function reservarAsiento(flightId) {
     }
 }
 
-async function comprarAsiento() {
-    clearInterval(countdownTimer);
+async function comprarAsientos() {
     spinner.style.display = 'block';
 
     try {
-        const response = await fetch(`${API_URL}/seat/book`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reservationId: currentReservationId, sessionId: localStorage.getItem('sessionId') })
-        });
-        if (!response.ok) throw new Error('No se pudo completar la compra.');
+        currentReservations.forEach(async reservation => {
+            const response = await fetch(`${API_URL}/seat/book`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    flightId: reservation.flightid,
+                    seatId: reservation.seatId,
+                    passengerType: reservation.passengerType,
+                    sessionId: localStorage.getItem('sessionId') 
+                })
+            });
+            if (!response.ok) throw new Error('No se pudo completar la compra.');
+        })
 
         alert("¡Compra exitosa! Tu asiento está confirmado.");
         window.location.href = 'profile.html';
@@ -322,35 +422,23 @@ async function comprarAsiento() {
     }
 }
 
-async function cancelarReserva(showAlert, flightId) {
-    clearInterval(countdownTimer);
-    if(currentReservationId) {
-        if (showAlert) {
-            alert("Tu reserva ha sido cancelada.");
-        } else {
-            alert("¡Se acabó el tiempo! Tu asiento ha sido liberado.");
-        }
+async function cancelarReserva(flightId, reservationId) {
 
+    if(reservationId) {
         // Se envía la petición al servidor para liberar los asientos
-        await fetch(`${API_URL}/seat/reserve`, {
+        await fetch(`${API_URL}/seat/unreserve`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reservationId: currentReservationId })
+            body: JSON.stringify({ 
+                reservationId: reservationId 
+            })
         });
     }
 
     // Se reinicia el estado local para que no haya conflictos
-    selectedSeats = [];
-    currentReservations = [];
-    currentReservationId = null;
-    if (countdownTimer) {
-        clearInterval(countdownTimer);
-        countdownTimer = null;
-    }
-    
-    // Y se recargan los datos del vuelo para actualizar el estado visual.
-    // Con la opción 'no-store' en getFlightDetails, se asegura de que sea una nueva petición.
-    getFlightDetails(flightId);
+    currentReservations = currentReservations.filter(r => r.id !== reservationId);
+
+    updateSummaryPanel();
 }
 
 function startCountdown(duration, flightId) {
@@ -373,17 +461,21 @@ function startCountdown(duration, flightId) {
 }
 
 function showSearchForm() {
+
+    currentReservations.forEach(r => cancelarReserva(currentFlightDetails.flight.id, r.id));
+
     document.getElementById('search-form').style.display = 'grid';
     resultsContainer.innerHTML = '';
     
     // Se limpia todo el estado de reserva al volver a la búsqueda
     selectedSeats = [];
-    currentReservations = [];
     currentReservationId = null;
     if (countdownTimer) {
         clearInterval(countdownTimer);
         countdownTimer = null;
     }
     
+    stopPolling();
+
     searchFlights();
 }

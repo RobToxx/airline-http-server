@@ -1,4 +1,4 @@
-const API_URL = 'http://10.60.0.220:8000';
+const API_URL = 'http://187.132.146.115:8000';
 
 // Seleccionamos los elementos del formulario de login
 const loginForm = document.getElementById('login-form');

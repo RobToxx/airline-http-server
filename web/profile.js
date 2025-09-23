@@ -1,4 +1,4 @@
-const API_URL = 'http://10.60.0.220:8000';
+const API_URL = 'http://187.132.146.115:8000';
 
 // Se ejecuta cuando la página de perfil termina de cargar
 window.addEventListener('DOMContentLoaded', () => {
