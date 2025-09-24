@@ -78,8 +78,6 @@ public class FlightController {
 
         Result<Map<String, String>> paramsResult = parseQuery(exchange.getRequestURI().getQuery());
 
-        System.out.println(exchange.getRequestURI().getQuery());
-
         if (paramsResult instanceof Result.Failure) {
 
             return sendResponse(exchange, 405, "Invalid Query Structure");
