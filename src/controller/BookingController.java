@@ -2,6 +2,8 @@ package controller;
 
 import java.io.OutputStream;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Scanner;
@@ -13,6 +15,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import model.Booking;
+import model.FlightBooking;
 import model.PassengerType;
 import model.Reservation;
 import service.BookingService;
@@ -38,6 +41,7 @@ public class BookingController {
         server.createContext("/seat/book", this::handleBook);
         server.createContext("/seat/reserve", this::handleReserve);
         server.createContext("/seat/unreserve", this::handleUnreserve);
+        server.createContext("/user/books", this::handleUserBooks);
     }
 
     private void handleBook(HttpExchange exchange) {
@@ -229,7 +233,7 @@ public class BookingController {
 
         if (!result.expect()) {
 
-             return sendResponse(
+            return sendResponse(
                 exchange, 
                 404, 
                 "Reservation not found"
@@ -241,6 +245,115 @@ public class BookingController {
             200, 
             "{}"
         );
+    }
+
+    private void handleUserBooks(HttpExchange exchange) {
+
+        addCorsHeaders(exchange);
+
+        Result<Void> result = processUserBooks(exchange);
+        
+        if (result instanceof Result.Failure failure) {
+
+            System.err.println("Error handling request /user/books: " + failure.exception().getMessage());
+
+        } else {
+
+            System.out.println("Request /user/books: "+exchange.getRemoteAddress()+": ");
+        }
+    }
+
+    private Result<Void> processUserBooks(HttpExchange exchange) {
+
+        if (!"GET".equals(exchange.getRequestMethod())) {
+
+            return sendResponse(
+                exchange,
+                405, 
+                "Method Not Allowed"
+            );
+        }
+
+        Result<Map<String, String>> paramsResult = parseQuery(exchange.getRequestURI().getQuery());
+
+        if (paramsResult instanceof Result.Failure) {
+
+            return sendResponse(exchange, 400, "Invalid Query Structure");
+        }
+
+        var params = paramsResult.expect();
+
+        if (!params.containsKey("sessionId")) {
+
+            return sendResponse(exchange, 400, "Missing session id");
+        }
+
+        Result<Optional<List<FlightBooking>>> result = bookingService.getBookingsOf(
+            params.get("sessionId")
+        );
+
+        if (result instanceof Result.Failure f) {
+
+            return sendInternalServerError(exchange, f.exception());
+        }
+
+        Optional<List<FlightBooking>> flightBookingOpt = result.expect();
+
+        if (flightBookingOpt.isEmpty()) {
+
+            return sendResponse(exchange, 
+                401, 
+                "Invalid session"
+            );
+        }
+
+        if (!params.containsKey("flightId")) {
+
+            return sendResponse(
+                exchange, 
+                200, 
+                this.gson.toJson(flightBookingOpt.get())
+            );
+        }
+
+        Optional<FlightBooking> fOpt = flightBookingOpt.get().stream()
+            .filter(f -> f.flight().id() == Integer.parseInt(params.get("flightId")))
+            .findAny();
+
+        if (fOpt.isEmpty()) {
+
+            return sendResponse(
+                exchange, 
+                404, 
+                "Reservation not found"
+            );
+        }
+
+        return sendResponse(
+            exchange, 
+            200, 
+            this.gson.toJson(
+                fOpt.get()
+            )
+        );
+    }
+
+    private Result<Map<String, String>> parseQuery(String query) {
+
+        return Result.of(()->{
+            Map<String, String> params = new HashMap<>();
+
+            if (query.isBlank()) return params;
+
+            for (String param : query.split("&")) {
+                
+                String[] kv = param.split("=");
+                params.put(kv[0], kv[1]);
+
+            }
+
+            return params;
+        });
     }
 
     private Result<Void> sendInternalServerError(HttpExchange exchange, Exception exception) {

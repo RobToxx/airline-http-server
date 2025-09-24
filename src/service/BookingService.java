@@ -2,11 +2,13 @@ package service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import auth.User;
 import model.Booking;
+import model.FlightBooking;
 import model.FlightDetails;
 import model.PassengerType;
 import model.Reservation;
@@ -26,6 +28,21 @@ public class BookingService {
         this.seatRepository = seatRepository;
         this.authService = authService;
         this.flightService = flightService;
+    }
+
+    public Result<Optional<List<FlightBooking>>> getBookingsOf(String sessionId) {
+
+        return Result.of(() -> {
+
+            Optional<User> userOpt = authService.validateSession(sessionId).orElseThrow();
+
+            if (userOpt.isEmpty())
+                return Optional.empty();
+
+            User user = userOpt.get();
+
+            return seatRepository.getBookingsOf(user.id()).orElseThrow();
+        });
     }
 
     public Result<Optional<Booking>> bookSeat(int flightId, String seatId, PassengerType passengerType, String sessionId) {
@@ -122,7 +139,7 @@ public class BookingService {
                 flightId,
                 flightDetails.flight().airplaneId(),
                 seatId,
-                LocalDateTime.now().minusMinutes(30),
+                LocalDateTime.now().plusMinutes(10),
                 passengerType,
                 seat.seatClass() == Seat.Class.FIRST? new BigDecimal("120000.00") : passengerType.price
             );

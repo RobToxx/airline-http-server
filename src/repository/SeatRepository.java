@@ -1,23 +1,37 @@
 package repository;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+
 import data.DatabaseConnection;
 import model.Booking;
+import model.Flight;
+import model.FlightBooking;
+import model.FlightBooking.SeatBook;
 import model.Reservation;
 import model.Seat;
+import util.LocalDateTimeAdapter;
 import util.Result;
 
 public class SeatRepository {
 	
 	private final DatabaseConnection database;
+    private final Gson gson;
 
 	public SeatRepository(DatabaseConnection database) {
 
         this.database = database;
+        this.gson = new GsonBuilder()
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+            .setPrettyPrinting()
+            .create();;
     }
 
     public Result<Void> book(Booking booking) {
@@ -138,6 +152,62 @@ public class SeatRepository {
                 } while (resultSet.next());
                 
                 return seats;
+            }
+        );
+    }
+
+    public Result<Optional<List<FlightBooking>>> getBookingsOf(int userId) {
+
+        String sql = """
+            SELECT 
+                flights.id,
+                flights.origin,
+                flights.destination,
+                flights.departure,
+                flights.airplane_id,
+                jsonb_agg(
+                    jsonb_build_object(
+                        'seatId', bookings.seat_id,
+                        'seatClass', seats.class,
+                        'purchaseDate', bookings.purchase_date,
+                        'passengerType', bookings.passenger_type,
+                        'price', bookings.price
+                    ) ORDER BY bookings.purchase_date
+                ) AS seat_books
+            FROM bookings
+            JOIN flights
+                ON bookings.flight_id = flights.id
+             JOIN seats
+                ON seats.airplane_id = bookings.airplane_id
+                AND seats.id = bookings.seat_id
+             WHERE bookings.user_id = ?
+             GROUP BY flights.id;
+        """;
+
+        return this.database.query(
+            sql, 
+            statement -> statement.setInt(1, userId),
+            resultSet -> {
+                List<FlightBooking> flightBookings = new ArrayList<>();
+
+                do {
+                    flightBookings.add(new FlightBooking(
+                        new Flight(
+                            resultSet.getInt("id"),
+                            resultSet.getString("origin"),
+                            resultSet.getString("destination"),
+                            resultSet.getTimestamp("departure").toLocalDateTime(),
+                            resultSet.getInt("airplane_id")
+                        ),
+                        gson.fromJson(
+                            resultSet.getString("seat_books"),
+                            new TypeToken<List<SeatBook>>(){}.getType()
+                        )
+
+                    ));
+                } while (resultSet.next());
+
+                return flightBookings;
             }
         );
     }
