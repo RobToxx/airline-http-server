@@ -1,4 +1,4 @@
-const API_URL = 'http://187.132.146.115:8000';
+const API_URL = 'http://10.60.0.187:8000';
 
 const registerForm = document.getElementById('register-form');
 const nameInput = document.getElementById('name');

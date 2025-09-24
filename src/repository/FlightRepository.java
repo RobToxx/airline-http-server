@@ -1,5 +1,6 @@
 package repository;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -41,19 +42,24 @@ public class FlightRepository {
         );
     }
 
+    private String removeAccents(String text) {
+        return Normalizer.normalize(text, Normalizer.Form.NFD)
+                     .replaceAll("\\p{M}", "");
+    }
+
     public Result<Optional<List<Flight>>> findFlights(FlightFilter filter) {
 
         StringBuilder sql = new StringBuilder("SELECT * FROM flights WHERE 1=1");
         List<Object> params = new ArrayList<>();
 
         filter.origin().ifPresent(o -> {
-            sql.append(" AND origin=?");
-            params.add(o);
+            sql.append(" AND unaccent(lower(origin)) LIKE ?");
+            params.add("%" + removeAccents(o.toLowerCase()) + "%");
         });
 
         filter.destination().ifPresent(d -> {
-            sql.append(" AND destination=?");
-            params.add(d);
+            sql.append(" AND unaccent(lower(destination)) LIKE ?");
+            params.add("%" + removeAccents(d.toLowerCase()) + "%");
         });
 
         filter.fromDate().ifPresent(fd -> {
