@@ -1,9 +1,14 @@
 const API_URL = 'http://187.132.146.115:8000';
 
+const formatterMX = new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+});
+
 // Se ejecuta cuando la página de perfil termina de cargar
 window.addEventListener('DOMContentLoaded', () => {
     const spinner = document.getElementById('spinner');
-    const reservationsContainer = document.getElementById('reservations-container');
+    const bookingsContainer = document.getElementById('bookings-container');
     const sessionId = localStorage.getItem('sessionId');
 
     // 1. Verificación: Si no hay sesión, no debería estar aquí. Lo mandamos a login.
@@ -15,81 +20,85 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // En tu profile.js, reemplaza únicamente la función fetchReservations con esta:
 
-async function fetchReservations() {
+async function fetchBookings() {
     spinner.style.display = 'block';
     try {
         // 1. Pedimos la lista inicial de reservaciones
-        const reservationsResponse = await fetch(`${API_URL}/user/reservations?sessionId=${sessionId}`);
-        if (!reservationsResponse.ok) throw new Error('No se pudieron cargar tus reservaciones.');
+        const bookingsResponse = await fetch(`${API_URL}/user/books?sessionId=${sessionId}`);
+
+        if (!bookingsResponse.ok) throw new Error('No se pudieron cargar tus vuelos comprados.');
         
-        const reservations = await reservationsResponse.json();
+        const bookings = await bookingsResponse.json();
 
-        // Si no hay reservaciones, lo indicamos y terminamos.
-        if (reservations.length === 0) {
-            displayReservations([]);
-            return;
-        }
-
-        // 2. Por cada reservación, creamos una petición para buscar los detalles de su vuelo
-        const flightDetailPromises = reservations.map(res => {
-            // ¡ATENCIÓN AQUÍ! Asegúrate de que el nombre de la propiedad ('flightid' o 'flightId')
-            // coincida EXACTAMENTE con el JSON que envía el backend. JavaScript distingue mayúsculas.
-            return fetch(`${API_URL}/flight?id=${res.flightid}`);
-        });
-
-        // 3. Ejecutamos todas las peticiones de detalles al mismo tiempo
-        const flightDetailResponses = await Promise.all(flightDetailPromises);
-
-        // 4. Convertimos todas las respuestas a JSON
-        const flightDetails = await Promise.all(
-            flightDetailResponses.map(res => {
-                if (!res.ok) throw new Error('Fallo al obtener el detalle de un vuelo.');
-                return res.json();
-            })
-        );
-
-        // 5. Unimos la información: a cada reservación le asignamos los detalles de su vuelo
-        const fullReservationDetails = reservations.map((res, index) => {
-            return {
-                // ¡ATENCIÓN AQUÍ! Asegúrate de que el nombre del ID de la reserva sea 'id' o 'reservationId'
-                reservationId: res.id, 
-                seatId: res.seatId,
-                flight: flightDetails[index].flight // El objeto de vuelo completo
-            };
-        });
-
-        // 6. Enviamos los datos ya combinados a la función que los muestra en pantalla
-        displayReservations(fullReservationDetails);
+        displayBookings(bookings);
 
     } catch (error) {
         console.error("Error detallado:", error);
-        reservationsContainer.innerHTML = `<p style="color: red;">${error.message}</p>`;
+        bookingsContainer.innerHTML = `<p style="color: red;">${error.message}</p>`;
     } finally {
         spinner.style.display = 'none';
     }
 }
 
     // 3. Función para mostrar las reservaciones en el HTML
-    function displayReservations(reservations) {
-        if (reservations.length === 0) {
-            reservationsContainer.innerHTML = '<p>Aún no tienes vuelos reservados.</p>';
+    function displayBookings(bookings) {
+        if (bookings.length === 0) {
+            bookingsContainer.innerHTML = '<p>Aún no tienes vuelos comprados.</p>';
             return;
         }
 
-        reservations.forEach(res => {
+        const seatClassMap = {
+            "FIRST": "Primera",
+            "ECONOMY": "Turista"
+        };
+
+        const passengerTypeMap = {
+            "ADULT": "Adulto",
+            "CHILD": "Niño",
+            "SENIOR": "Adulto mayor"
+        };
+
+        bookings.forEach(book => {
             const flightCard = document.createElement('div');
-            flightCard.className = 'flight-card'; // Reutilizamos la clase de estilo
+
+            flightCard.className = 'flight-card';
+
             flightCard.innerHTML = `
-                <p><strong>Vuelo:</strong> ${res.flight.origin} a ${res.flight.destination}</p>
-                <p><strong>Aerolínea:</strong> ${res.flight.airline}</p>
-                <p><strong>Salida:</strong> ${new Date(res.flight.departure).toLocaleString()}</p>
-                <p><strong>Asiento:</strong> ${res.seatId}</p>
-                <p><strong>ID de Reserva:</strong> ${res.reservationId}</p>
+                <h2><p><strong>Vuelo:</strong> ${book.flight.origin} → ${book.flight.destination}</p></h2>
+                <p><strong>Salida:</strong> ${new Date(book.flight.departure).toLocaleString()}</p>
+                <p><strong>ID Avión:</strong> ${book.flight.airplaneId}</p>
             `;
-            reservationsContainer.appendChild(flightCard);
+
+            const seatsList = document.createElement('ul');
+            seatsList.className = 'seat-list';
+
+            let total = 0
+
+            book.seats.forEach(seat => {
+                const seatItem = document.createElement('li');
+                seatItem.className = 'seat-item';
+                seatItem.innerHTML = `
+                    <span><strong>Asiento:</strong> ${seat.seatId}</span> 
+                    <span><strong>Clase:</strong> ${seatClassMap[seat.seatClass]}</span>
+                    <span><strong>Pasajero:</strong> ${passengerTypeMap[seat.passengerType]}</span>
+                    <span><strong>Precio:</strong> ${formatterMX.format(seat.price)}</span>
+                    <span><strong>Compra:</strong> ${new Date(seat.purchaseDate).toLocaleString()}</span>
+                `;
+                seatsList.appendChild(seatItem);
+
+                total += seat.price;
+            });
+
+            flightCard.appendChild(seatsList);
+
+            const totalHeader = document.createElement('h3');
+            totalHeader.innerHTML = `Total: ${formatterMX.format(total)}`;
+
+            flightCard.appendChild(totalHeader)
+
+            bookingsContainer.appendChild(flightCard);
         });
     }
 
-    // 4. ¡Llamamos a la función para que todo empiece!
-    fetchReservations();
+    fetchBookings();
 });

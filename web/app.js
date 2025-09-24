@@ -14,7 +14,9 @@ const spinner = document.getElementById('spinner');
 // --- VARIABLES GLOBALES PARA MANEJAR EL ESTADO ---
 let selectedSeats = [];
 let currentFlightDetails = null;
+let currentFlightBooking = null;
 let currentReservationId = null;
+let currentBookings = [];
 let countdownTimer = null;
 let currentReservations = []; // Array para almacenar los resultados de las reservas exitosas
 
@@ -34,7 +36,7 @@ window.addEventListener('DOMContentLoaded', () => {
     searchFlights();
 });
 
-// --- LÓGICA DE BÚSQUEDA ---
+// --- LÓGICA DE BÚSQ++UEDA ---
 async function searchFlights() {
     resultsContainer.innerHTML = '';
     statusDiv.innerHTML = '';
@@ -164,6 +166,21 @@ async function getFlightDetails(flightId) {
         currentFlightDetails = await response.json();
         console.log('Datos recibidos del vuelo:', currentFlightDetails);
 
+        const sessionId = localStorage.getItem('sessionId');
+
+        if (sessionId) {
+
+            const bResponse = await fetch(`${API_URL}/user/books?sessionId=${sessionId}&flightId=${flightId}`, {
+                // Esta opción obliga al navegador a no usar la caché
+                cache: 'no-store' 
+            });
+            if (bResponse.ok) {
+                currentFlightBooking = await bResponse.json();
+            };
+        }
+
+        console.log(currentFlightBooking);
+
         searchForm.style.display = 'none';
         resultsContainer.innerHTML = '';
 
@@ -186,11 +203,12 @@ async function getFlightDetails(flightId) {
             }
             cabinHTML += '<div class="seat-row">';
             rowSeats.forEach(seat => {
+                const isOwned = currentFlightBooking && currentFlightBooking.seats.find(s => s.seatId === seat.id )? 'owned' : '';
                 const isSelected = selectedSeats.find(s => s.id === seat.id)? 'selected' : '';
                 const isAvailable = seat.status === 'AVAILABLE';
                 const clickHandler = isAvailable || isSelected? `onclick="selectSeat('${seat.id}', this)"` : '';
 
-                cabinHTML += `<div id="seat-${seat.id}" class="${isSelected} seat ${seat.status}" ${isAvailable || isSelected? '' : `aria-disabled="true"`} ${clickHandler}>${seat.id}</div>`;
+                cabinHTML += `<div id="seat-${seat.id}" class="${isOwned} ${isSelected} seat ${seat.status}" ${isAvailable || isSelected? '' : `aria-disabled="true"`} ${clickHandler}>${seat.id}</div>`;
                 if (currentClass === 'FIRST' && seat.id.endsWith('C') && rowSeats.length > 3) {
                     cabinHTML += '<div class="aisle-first-class"></div>';
                 } else if (currentClass === 'ECONOMY' && seat.id.endsWith('C') && rowSeats.length > 3) {
@@ -256,6 +274,12 @@ function selectSeat(seatId, seatElement) {
 }
 
 function updateSummaryPanel() {
+
+    const formatterMX = new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN',
+    });
+
     const summaryPanel = document.getElementById('summary-panel');
 
     let subtotal = 0;
@@ -272,7 +296,7 @@ function updateSummaryPanel() {
                 <li>
                     <span>Asiento: <b>${seat.seatId}</b></span>
                     <span>${seat.passengerType}</span>
-                    <span>$${seat.price.toFixed(2)}</span>
+                    <span>${formatterMX.format(seat.price)}</span>
                     <span><select onchange="modifyReserve(this, '${seat.id}', ${seat.flightid}, '${seat.seatId}')">
                         <option value="ADULT" ${seat.passengerType == 'ADULT' ? 'selected' : ''}>Adulto</option>
                         <option value="CHILD" ${seat.passengerType == 'CHILD' ? 'selected' : ''}>Niño</option>
@@ -283,7 +307,7 @@ function updateSummaryPanel() {
             subtotal += seat.price;
         });
         summaryHTML += '</ul>';
-        summaryHTML += `<hr><div class="subtotal"><span>Subtotal:</span><span>$${subtotal.toFixed(2)}</span></div>`;
+        summaryHTML += `<hr><div class="subtotal"><span>Subtotal:</span><span>${formatterMX.format(subtotal)}</span></div>`;
         summaryHTML += `<button onclick="comprarAsientos()">Confirmar Compra</button>`;
     }
 
@@ -396,30 +420,94 @@ async function reservarAsiento(flightId, seatId) {
 
 async function comprarAsientos() {
     spinner.style.display = 'block';
-
     try {
-        currentReservations.forEach(async reservation => {
-            const response = await fetch(`${API_URL}/seat/book`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    flightId: reservation.flightid,
-                    seatId: reservation.seatId,
-                    passengerType: reservation.passengerType,
-                    sessionId: localStorage.getItem('sessionId') 
-                })
-            });
-            if (!response.ok) throw new Error('No se pudo completar la compra.');
-        })
+        // Ejecutar todas las compras en paralelo y esperar sus respuestas
+        const results = await Promise.all(
+            currentReservations.map(async reservation => {
+                const response = await fetch(`${API_URL}/seat/book`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        flightId: reservation.flightid,
+                        seatId: reservation.seatId,
+                        passengerType: reservation.passengerType,
+                        sessionId: localStorage.getItem('sessionId') 
+                    })
+                });
+                if (!response.ok) throw new Error('No se pudo completar la compra.');
+                return response.json();
+            })
+        );
 
-        alert("¡Compra exitosa! Tu asiento está confirmado.");
-        window.location.href = 'profile.html';
+        console.log("Resultados de la compra:", results);
 
-    } catch(error) {
+        // Mostrar recibo
+        showReceipt(results);
+        getFlightDetails(currentFlightDetails.flight.id);
+        updateSummaryPanel();
+    } catch (error) {
         alert(error.message);
     } finally {
         spinner.style.display = 'none';
     }
+}
+
+function showReceipt(results) {
+
+    const formatterMX = new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN',
+    });
+
+    currentReservations = [];
+
+    const receiptDetails = document.getElementById("receiptDetails");
+    receiptDetails.innerHTML = `
+        <p><strong>Vuelo:</strong> ${currentFlightDetails.flight.origin} → ${currentFlightDetails.flight.destination}</p>
+        <p><strong>Salida:</strong> ${new Date(currentFlightDetails.flight.departure).toLocaleString()}</p>
+    `;
+
+    const passengerTypeMap = {
+        "ADULT": "Adulto",
+        "CHILD": "Niño",
+        "SENIOR": "Adulto mayor"
+    };
+
+    const seatsList = document.createElement('ul');
+    seatsList.className = 'seat-list';
+
+    let total = 0;
+
+    results.forEach(seat => {
+        const seatItem = document.createElement('li');
+        seatItem.className = 'seat-item';
+        seatItem.innerHTML = `
+            <span><strong>Asiento:</strong> ${seat.seatId}</span>
+            <span><strong>Pasajero:</strong> ${passengerTypeMap[seat.passengerType]}</span>
+            <span><strong>Precio:</strong> ${formatterMX.format(seat.price)}</span>
+        `;
+        seatsList.appendChild(seatItem);
+
+        total += seat.price;
+    });
+
+    receiptDetails.appendChild(seatsList);
+
+    const totalElement = document.createElement('p');
+    totalElement.className = 'total-price';
+    totalElement.innerHTML = `<h3><strong>Total a pagar:</strong> ${formatterMX.format(total)}<h3>`;
+    receiptDetails.appendChild(totalElement);
+
+    document.getElementById("receiptModal").style.display = "flex";
+
+    // Botones del modal
+    document.getElementById("closeReceipt").onclick = () => {
+        document.getElementById("receiptModal").style.display = "none";
+    };
+
+    document.getElementById("goToProfile").onclick = () => {
+        window.location.href = 'profile.html';
+    };
 }
 
 async function cancelarReserva(flightId, reservationId) {
@@ -469,6 +557,7 @@ function showSearchForm() {
     
     // Se limpia todo el estado de reserva al volver a la búsqueda
     selectedSeats = [];
+    currentFlightBooking = null;
     currentReservationId = null;
     if (countdownTimer) {
         clearInterval(countdownTimer);
