@@ -250,7 +250,7 @@ public class AuthController {
              return sendResponse(
                 exchange, 
                 400, 
-                "Invalid register parameters: "+registerResult.name()
+                "{\"message\": \""+registerResult.message+"\"}"
             );
         }
 
