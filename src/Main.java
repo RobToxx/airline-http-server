@@ -1,5 +1,8 @@
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import com.sun.net.httpserver.HttpServer;
 
@@ -11,6 +14,7 @@ import repository.SessionRepository;
 import repository.UserDAO;
 import service.AuthService;
 import service.BookingService;
+import service.CacheCleaner;
 import service.FlightService;
 import controller.AuthController;
 import controller.BookingController;
@@ -79,6 +83,8 @@ public class Main {
         AuthService authService = new AuthService(new UserDAO(database), sessionRepository);
         BookingService bookingService = new BookingService(seatRepository, authService, flightService);
 
+        CacheCleaner cleaner = new CacheCleaner(database);
+
         FlightController flightController = new FlightController(flightService);
         AuthController authController = new AuthController(authService);
         BookingController bookingController = new BookingController(bookingService);
@@ -91,6 +97,16 @@ public class Main {
         authController.registerRoutes(server);
         flightController.registerRoutes(server);
         bookingController.registerRoutes(server);
+
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+        // Ejecuta clean() cada 5 minutos
+        scheduler.scheduleAtFixedRate(
+            cleaner::clean,
+            0,
+            1,
+            TimeUnit.MINUTES
+        );
 
         server.setExecutor(null);
         server.start();
