@@ -1,4 +1,4 @@
-const API_URL = 'http://10.60.0.187:8000';
+const API_URL = 'http://localhost:8000';
 
 const formatterMX = new Intl.NumberFormat('es-MX', {
     style: 'currency',

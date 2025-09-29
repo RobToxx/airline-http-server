@@ -509,3 +509,43 @@ button:disabled {
   background: #007bff;
   color: white;
 }
+
+.seat-legend {
+    margin-top: 20px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.seat-legend h3 {
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.seat-legend ul {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+}
+
+.seat-legend li {
+    display: flex;
+    align-items: center;
+    font-size: 0.95em;
+}
+
+.legend-box {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    margin-right: 8px;
+    display: inline-block;
+    border: 1px solid #ccc;
+}
+
+/* Colores iguales a los estados */
+.legend-box.available { background-color: #white; border-color: #adb5bd; }
+.legend-box.reserved  { background-color: #e9ecef; border-color: #ced4da; }
+.legend-box.booked    { background-color: #f5c6cb; border-color: #ced4da; }
+.legend-box.selected  { background-color: #28a745; border-color: #1e7e34; }
+.legend-box.owned     { background-color: #66b0ff; border-color: #3d91eb; }

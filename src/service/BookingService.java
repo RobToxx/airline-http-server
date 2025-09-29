@@ -139,7 +139,7 @@ public class BookingService {
                 flightId,
                 flightDetails.flight().airplaneId(),
                 seatId,
-                LocalDateTime.now().plusMinutes(10),
+                LocalDateTime.now().plusMinutes(1),
                 passengerType,
                 seat.seatClass() == Seat.Class.FIRST? new BigDecimal("120000.00") : passengerType.price
             );

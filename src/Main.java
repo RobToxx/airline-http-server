@@ -104,8 +104,8 @@ public class Main {
         scheduler.scheduleAtFixedRate(
             cleaner::clean,
             0,
-            1,
-            TimeUnit.MINUTES
+            10,
+            TimeUnit.SECONDS
         );
 
         server.setExecutor(null);

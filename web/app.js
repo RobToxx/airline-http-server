@@ -1,4 +1,4 @@
-const API_URL = 'http://10.60.0.187:8000';
+const API_URL = 'http://localhost:8000';
 
 // Seleccionamos los elementos del DOM
 const searchForm = document.getElementById('search-form');
@@ -138,6 +138,14 @@ async function updateSeatStatuses(flightId) {
 
         seatDiv.classList.add(`${seat.status}`);
 
+        if (seat.status === 'AVAILABLE' && seatDiv.classList.contains('selected')) {
+
+            console.log('remove');
+
+            selectedSeats = selectedSeats.filter(r => r.id !== seat.id);
+            seatDiv.classList.remove('selected');
+        }
+
         if (seat.status === 'AVAILABLE' || seatDiv.classList.contains('selected')) {
 
             seatDiv.setAttribute('onclick', `selectSeat('${seat.id}', this)`);
@@ -221,6 +229,16 @@ async function getFlightDetails(flightId) {
         detailsDiv.innerHTML = `
             <h2>Selecciona tu asiento</h2>
             <button onclick="showSearchForm()">Volver a la Búsqueda</button>
+            <div class="seat-legend">
+                <h3>Leyenda de asientos</h3>
+                <ul>
+                    <li><span class="legend-box available"></span> Disponible</li>
+                    <li><span class="legend-box reserved"></span> Reservado (en proceso)</li>
+                    <li><span class="legend-box booked"></span> Comprado</li>
+                    <li><span class="legend-box selected"></span> Seleccionado</li>
+                    <li><span class="legend-box owned"></span> Comprado por ti</li>
+                </ul>
+            </div>
             <div class="details-container">
                 <div class="airplane">
                     <div class="cockpit"></div><div class="cabin">${cabinHTML}</div><div class="tail"></div>
@@ -238,6 +256,13 @@ async function getFlightDetails(flightId) {
 }
 
 function selectSeat(seatId, seatElement) {
+
+    const sessionId = localStorage.getItem('sessionId');
+    if (!sessionId) {
+        alert("Por favor, inicia sesión para poder reservar.");
+        window.location.href = 'login.html';
+        return;
+    }
 
     const seatData = currentFlightDetails.seats.find(s => s.id === seatId);
 
